@@ -1,0 +1,23 @@
+//$Id$
+
+Eveauth 6.x.beta 0.1
+====================
+
+First release
+
+
+Eveauth 6.x.beta 0.2
+====================
+
+Bugfixes:
+ - The character sheet displayed your clone maximum skillpoints instead of the character current skillpoints. This has now been corrected
+ - Various information and error messages was displayed twice some places, this has been corrected.
+
+New features:
+ - Added the option of an extra layer of security with wallet check. If enabled the user now have to balance the last two decimal digits of 
+   his wallet in order to register. The number can be customized on the admin screen
+ - Added a carebear threshold function. You can set a threshold, and if a number of your corpmates/alliancemates wallet balance falls below
+   that threshold, the system tells you it is time to carebear to get everyones wallet balance up again
+
+General Fixes:
+ - Added Planetary Management skill group to the character sheet

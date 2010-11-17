@@ -1,0 +1,6 @@
+// $Id$
+
+DEVELOPER DOCUMENTATION
+
+
+For documentation, tutorials and on-line help for eveauth, visit http://thestate.helges.net
