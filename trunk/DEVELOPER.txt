@@ -1,6 +1,0 @@
-// $Id$
-
-DEVELOPER DOCUMENTATION
-
-
-No developer documentation is available at this stage. See the drupal module pages for more information.
