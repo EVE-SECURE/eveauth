@@ -1,6 +1,0 @@
-//$Id$
-
-Eveauth 6.x.beta 0.1
-====================
-
-First release
