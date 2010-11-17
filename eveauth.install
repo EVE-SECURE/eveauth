@@ -1,0 +1,212 @@
+<?php
+// $Id$
+/**
+ * Install eveauth, including skill data set from Tranquility servers
+ * 
+ * @file
+ */
+
+
+/**
+ * Implementation of hook_schema.
+ */
+
+function eveauth_schema() {
+  $schema['eveauth'] = array(
+    'description' => t('This table holds all the account users for new user registering to the site.'),
+    'fields' => array(
+      'accountid' => array(
+        'description' => t('The primary identifier for an account.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE
+    ),
+      'drupalid' => array(
+        'description' => t('The link between api and drupal account.'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+        'userid' => array(
+        'description' => t('The user id of the account.'),
+        'type' => 'int',
+        'not null' => TRUE,
+       ),
+      'api' => array(
+        'description' => t('The apikey of the account.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+       ),
+      'chid' => array(
+        'description' => t('Stores the users selected eve character ID'),
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => FALSE,
+        'default' => 0,
+       ),
+      'auth' => array(
+        'description' => t('Key defining if user is authenticated with extra security'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+        'default' => 0,
+       ),
+
+    ),
+    'unique keys' => array(
+      'accountid'     => array('accountid')
+      ),
+    'primary key' => array('accountid'),
+  );
+
+  $schema['eveauth_skills'] = array(
+    'description' => t('This table holds information about the skills required for displaying the character sheet'),
+    'fields' => array(
+        'id'    =>  array (
+            'description'   =>  t('Internal reference, primary identifier'),
+            'type'          =>  'serial',
+            'unsigned'      =>  TRUE,
+            'not null'      =>  TRUE,
+        ),
+
+        'name'      => array (
+            'description'   => t('Name of the skill'),
+            'type'          => 'varchar',
+            'length'        => 255,
+            'not null'      => TRUE,
+        ),
+
+        'groupid'   =>  array (
+            'description'   =>  t('Which group does the skill belong under'),
+            'type'          =>  'int',
+            'not null'      =>  TRUE,
+        ),
+
+        'skillid'   =>  array (
+            'description'   =>  t('Number that refers the skill from api'),
+            'type'          =>  'int',
+            'not null'      =>  TRUE,
+        ),
+
+        'description'   =>  array(
+            'description'   =>  t('Description of the skill'),
+            'type'          => 'text',
+            'size'          =>  'medium'
+        ),
+
+     ),
+    'unique keys' => array(
+      'id'     => array('id')
+      ),
+    'primary key' => array('id'),
+  );
+
+   $schema['eveauth_skillgroups'] = array(
+    'description' => t('This table holds information about the skillgroups required for sorting skills'),
+    'fields' => array(
+        'id'    =>  array (
+            'description'   =>  t('Internal reference, primary identifier'),
+            'type'          =>  'serial',
+            'unsigned'      =>  TRUE,
+            'not null'      =>  TRUE,
+        ),
+
+        'name'      => array (
+            'description'   => t('Name of the skillgroup'),
+            'type'          => 'varchar',
+            'length'        => 255,
+            'not null'      => TRUE,
+        ),
+
+        'groupid'   =>  array (
+            'description'   =>  t('Number that refers the skillgroup from api'),
+            'type'          =>  'int',
+            'not null'      =>  TRUE,
+        ),
+
+      ),
+    'unique keys' => array(
+      'id'     => array('id')
+      ),
+    'primary key' => array('id'),
+  );
+   
+  return $schema;
+}
+
+
+/**
+ * Implementation of hook_install().
+ */
+
+function eveauth_install() {
+  // Create tables
+  // 
+  // eveauth:               - Stores registered users userID and limited API key.
+  // eveauth_skillgroups:   - Skill categories pulled from CCP api server
+  // eveauth_skills:        - Skill names and description pulled from CCP api server
+    
+  drupal_install_schema('eveauth');
+
+  // Connect to api.eve-online.com to retrieve needed skill information for use in user character sheets
+  
+  $url = 'http://api.eve-online.com/eve/SkillTree.xml.aspx';
+  $http_result = drupal_http_request($url);
+  $doc = simplexml_load_string($http_result->data);
+
+  $count_skillgroups = count($doc->result->rowset->row);
+
+  if ($count_skillgroups < 1) { // return error if XML rowset is 0, i.e empty XML document
+    drupal_set_message("Unable to retrieve skillset from CCP api servers",'error');
+  }
+
+  for ($i = 0; $i < $count_skillgroups; $i++) {
+      $data = array (
+           'name'          => $doc->result->rowset->row[$i]->attributes()->groupName,
+           'groupid'       => $doc->result->rowset->row[$i]->attributes()->groupID,
+      );
+
+      $result = db_query("INSERT INTO {eveauth_skillgroups} (name, groupid) VALUES ('".$data['name']."', '".$data['groupid']."')");
+
+      $count_skills = count($doc->result->rowset->row[$i]->rowset->row);
+
+      for ($x = 0; $x < $count_skills; $x++) {
+          $dataskill = array (
+                    'name'          => $doc->result->rowset->row[$i]->rowset->row[$x]->attributes()->typeName,
+                    'groupid'       => $doc->result->rowset->row[$i]->rowset->row[$x]->attributes()->groupID,
+                    'skillid'       => $doc->result->rowset->row[$i]->rowset->row[$x]->attributes()->typeID,
+                    'description'   => $doc->result->rowset->row[$i]->rowset->row[$x]->description,
+          );
+
+
+         $result2 = db_query('INSERT INTO {eveauth_skills} (name, groupid, skillid, description) VALUES ("'.$dataskill['name'].'", "'.$dataskill['groupid'].'", "'.$dataskill['skillid'].'", "'.$dataskill['description'].'")');
+       }
+
+
+     }
+
+
+}
+
+function eveauth_update_2() {
+    $ret = array ();
+    db_add_field($ret, 'eveauth', 'chid', array('type' => 'int', 'size' => 'big', 'not null' => FALSE, 'default' => 0));
+    db_add_field($ret, 'eveauth', 'auth', array('type' => 'int', 'size' => 'tiny', 'not null' => FALSE, 'default' => 0));
+    $dbupdate = db_query('UPDATE eveauth SET auth=1');
+    $dbupdate = db_query('UPDATE eveauth SET api=0');
+    drupal_set_message(t('All API keys have been erased from the database. This means that every user have to go to their account screen and re-update their API key. This does not mean anything important has been lost, but in order for eveauth to work correctly with all the new functions the users need to do this. If you have enabled persistent check, the users will be notified of this.'), 'warning', FALSE);
+    return $ret;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+
+
+function eveauth_uninstall() {
+  // Drop my tables.
+  drupal_uninstall_schema('eveauth');
+}
+
+
+?>
