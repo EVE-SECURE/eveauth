@@ -1,4 +1,0 @@
-; $Id$
-name = Eve Authentication
-description = Lets your Drupal site authenticate users via the Eve online API key
-core = 6.x
