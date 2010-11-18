@@ -727,7 +727,7 @@ function eveauth_character_validate($form, &$form_state) {
                 drupal_write_record('users_roles',$data);
 
                 
-                drupal_set_message("Registration successfull. Your user has been granted the appropriate roles for a member in ".$characterCorpName,'status');
+                drupal_set_message("Registration successfull. Your user has been granted the appropriate roles for a member in ".$characterCorpName,'status', FALSE);
             }
  
         }
