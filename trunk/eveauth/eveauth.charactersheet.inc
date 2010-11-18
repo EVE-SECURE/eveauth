@@ -13,7 +13,11 @@ function user_character_sheets($user) {
     // Retrieve a list of available characters from the api servers
     $user_api   = db_result(db_query('SELECT api FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
     $user_id    = db_result(db_query('SELECT userid FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-    
+
+    if (!$api) {
+        return drupal_set_message("The specified user does not have a API key associated with it. Character sheet can not be displayed with this user", 'error', FALSE);
+    }
+
     $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$user_api.'&userID='.$user_id;
     $http_result = drupal_http_request($api_url);
     $doc = simplexml_load_string($http_result->data);
@@ -22,7 +26,7 @@ function user_character_sheets($user) {
 
     // Retrieve all of the character ID's from api and store them in
     // an array. These values will be needed to get the character sheets
-    
+
     $player_id = array ();
     for ($i = 0; $i < $count_items; $i++) {
        $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->characterID;
@@ -327,7 +331,7 @@ function user_character_sheets($user) {
                      }
 
                  }
-   
+
                 // Embed all of the skill array/categories with html
 
                  $output_of_skill_sheet = "
@@ -422,12 +426,12 @@ function user_character_sheets($user) {
                  $html[$key] = $html[$key].$output_of_skill_sheet;
 
 
-                 
-                
+
+
       }
 
     // Connect all of the character sheets on the account togheter in one page
-    foreach ($html as $key => $value) {
+    foreach ((array) $html as $key => $value) {
         $output = $output.$value;
     }
           return ($output);
