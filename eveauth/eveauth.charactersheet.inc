@@ -14,7 +14,7 @@ function user_character_sheets($user) {
     $user_api   = db_result(db_query('SELECT api FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
     $user_id    = db_result(db_query('SELECT userid FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
 
-    if (!$api) {
+    if (!$user_api) {
         return drupal_set_message("The specified user does not have a API key associated with it. Character sheet can not be displayed with this user", 'error', FALSE);
     }
 
