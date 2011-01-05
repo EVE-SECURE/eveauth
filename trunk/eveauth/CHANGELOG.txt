@@ -21,3 +21,16 @@ New features:
 
 General Fixes:
  - Added Planetary Management skill group to the character sheet
+
+Eveauth 6.x.beta 0.2.2
+======================
+
+Bugfixes:
+ - Patch applied to rectify an error when the admin account tried to access its character sheets (admin account don't have a api key attached to it
+   by default).
+
+Eveauth 6.x.beta 0.2.3
+======================
+
+Bugfixes:
+ - Modified code to conform with drupal code standards.

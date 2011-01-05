@@ -8,17 +8,17 @@
  * roles(): - Create apropriate roles for each corporation  * in the alliance
  * or just a corporation
  *
- * create_role(): - Called from roles() to inject roles based on corporation
+ * eveauth_create_role(): - Called from roles() to inject roles based on corporation
  * name(s)
  *
- * identify_platform_corpid(): - Retrieves the corporation ID from api
- * get_alliance_name_id(): - Retrieves the alliance name and ID as an array
- * get_alliance_corps(): - Retrieves corporations within the alliance
- * identify_platform_corp(): - Identifies the host corporation as a name
+ * eveauth_identify_platform_corpid(): - Retrieves the corporation ID from api
+ * eveauth_get_alliance_name_id(): - Retrieves the alliance name and ID as an array
+ * eveauth_get_alliance_corps(): - Retrieves corporations within the alliance
+ * eveauth_identify_platform_corp(): - Identifies the host corporation as a name
  * identifier
  *
- * identify_platform_id(): - Identifies the character host ID
- * identify_platform(): - Identifies the host character name
+ * eveauth_identify_platform_id(): - Identifies the character host ID
+ * eveauth_identify_platform(): - Identifies the host character name
  * eveauth_character_validate(): - Validation procedures for
  * eveauth_form_user_profile_form_alter
  *
@@ -40,7 +40,7 @@
  */
 
 function eveauth_perm() {
-    return array('administer eveauth','view charactersheets');
+  return array('administer eveauth','view charactersheets');
 }
 
 
@@ -71,219 +71,228 @@ function eveauth_menu() {
   $items['admin/settings/eveauth/roles'] = array(
     'title' => 'Roles setup',
     'description' => 'Each corporation in your alliance will be given its own role definition. If you only use one corp instead of alliance, only that corporation will be added to the roles list',
-    'page callback' => 'roles',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('roles'),
+    'page arguments' => array('eveauth_roles'),
     'access arguments' => array('access administration pages'),
   );
 
     $items['admin/settings/eveauth/carebearthreshold'] = array(
     'title' => 'Carebear threshold',
     'description' => 'Eveauth will monitor your members wallets and alert you when a set percentage of the members drops below a certain threshold',
-    'page callback' => 'carebeart',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('carebeart'),
+    'page arguments' => array('eveauth_carebeart'),
     'access arguments' => array('access administration pages'),
   );
 
   return $items;
 }
 
-function carebeart() {
-    $carebearstatus = variable_get("ct_enable", '');
-    $ctpercent = variable_get("ct_percent", '');
-    $ctamount = variable_get("ct_amount", '');
-    $ctignore = variable_get("ct_ignore", '');
+function eveauth_carebeart() {
+  $carebearstatus = variable_get("eveauth_ct_enable", '');
+  $ctpercent = variable_get("eveauth_ct_percent", '');
+  $ctamount = variable_get("eveauth_ct_amount", '');
+  $ctignore = variable_get("eveauth_ct_ignore", '');
 
-    $form['cbcontrol'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Carebear threshold control panel'),
-        '#collapsible' => FALSE,
-    );
-    $form['cbcontrol']['ct_enable'] = array (
-        '#type' => 'radios',
-        '#title'=> t('Enable?'),
-        '#options' => array(t('Yes'), t('No')),
-        '#default_value' => variable_get('ct_enable', 1),
-        '#element_validate' => array('eveauth_ct_validate'),
-        '#description' => t("This will keep a tab on a set percentage of your memberbase and their wallet. When it drops below a given threshold, chosen roles will be notified that the members are running dry on isk (and it is time to do some corp carebearing perhaps)"),
-    );
+  $form['cbcontrol'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Carebear threshold control panel'),
+    '#collapsible' => FALSE,
+  );
 
+  $form['cbcontrol']['eveauth_ct_enable'] = array (
+    '#type' => 'radios',
+    '#title'=> t('Enable?'),
+    '#options' => array(t('Yes'), t('No')),
+    '#default_value' => variable_get('eveauth_ct_enable', 1),
+    '#element_validate' => array('eveauth_ct_validate'),
+    '#description' => t("This will keep a tab on a set percentage of your memberbase and their wallet. When it drops below a given threshold, chosen roles will be notified that the members are running dry on isk (and it is time to do some corp carebearing perhaps)"),
+  );
 
-        $form['cbcontrol']['ct_percent'] = array (
-            '#type' => 'textfield',
-            '#title'=> t('Percent'),
-            '#size'=> 3,
-            '#maxlenght' => 3,
-            '#default_value' => $ctpercent,
-            '#element_validate' => array('eveauth_ct_validate'),
-            '#description' => t("Enter a number between 1 and 100"),
-            '#required' => FALSE,
-        );
-        $form['cbcontrol']['ct_amount'] = array (
-            '#type' => 'textfield',
-            '#title'=> t('Amount'),
-            '#size'=> 12,
-            '#maxlenght' => 20,
-            '#default_value' => $ctamount,
-            '#element_validate' => array('eveauth_ct_validate'),
-            '#description' => t("Enter an amount for threshold"),
-            '#required' => FALSE,
-        );
-         $form['cbcontrol']['ct_ignore'] = array (
-            '#type' => 'textfield',
-            '#title'=> t('Ignore'),
-            '#size'=> 12,
-            '#maxlenght' => 20,
-            '#default_value' => $ctignore,
-            '#element_validate' => array('eveauth_ct_validate'),
-            '#description' => t("Enter an amount to ignore. Everyone with a wallet balance above this amount will not be taken into consideration"),
-            '#required' => FALSE,
-        );
+  $form['cbcontrol']['eveauth_ct_percent'] = array (
+    '#type' => 'textfield',
+    '#title'=> t('Percent'),
+    '#size'=> 3,
+    '#maxlenght' => 3,
+    '#default_value' => $ctpercent,
+    '#element_validate' => array('eveauth_ct_validate'),
+    '#description' => t("Enter a number between 1 and 100"),
+    '#required' => FALSE,
+  );
+
+  $form['cbcontrol']['eveauth_ct_amount'] = array (
+    '#type' => 'textfield',
+    '#title'=> t('Amount'),
+    '#size'=> 12,
+    '#maxlenght' => 20,
+    '#default_value' => $ctamount,
+    '#element_validate' => array('eveauth_ct_validate'),
+    '#description' => t("Enter an amount for threshold"),
+    '#required' => FALSE,
+  );
+
+  $form['cbcontrol']['eveauth_ct_ignore'] = array (
+    '#type' => 'textfield',
+    '#title'=> t('Ignore'),
+    '#size'=> 12,
+    '#maxlenght' => 20,
+    '#default_value' => $ctignore,
+    '#element_validate' => array('eveauth_ct_validate'),
+    '#description' => t("Enter an amount to ignore. Everyone with a wallet balance above this amount will not be taken into consideration"),
+    '#required' => FALSE,
+  );
     
- return system_settings_form($form);
+  return system_settings_form($form);
 }
 
 function eveauth_block($op = 'list', $delta = 0, $edit = array ()) {
-    $carebearstatus = variable_get("ct_enable", '');
-    $ctpercent = variable_get("ct_percent", '');
-    $ctamount = variable_get("ct_amount", '');
-    $ctignore = variable_get("ct_ignore", '');
+  $carebearstatus = variable_get("eveauth_ct_enable", '');
+  $ctpercent = variable_get("eveauth_ct_percent", '');
+  $ctamount = variable_get("eveauth_ct_amount", '');
+  $ctignore = variable_get("eveauth_ct_ignore", '');
 
-    if ($op == "list" && $carebearstatus == 0) {
-        $block = array ();
-        $block[0]["info"] = t('Carebear threshold information');
-        return $block;
-    } elseif ($op == 'view') {
-        $result = db_query("SELECT drupalid,userid,api,chid FROM {eveauth}");
-        $r_array = array ();
+  if ($op == "list" && $carebearstatus == 0) {
+    $block = array ();
+    $block[0]["info"] = t('Carebear threshold information');
+    return $block;
+  }
 
-        while($value = db_fetch_array($result)) {
-            $r_array[] = $value;
-        }
+  elseif ($op == 'view') {
+    $result = db_query("SELECT drupalid,userid,api,chid FROM {eveauth}");
+    $r_array = array ();
 
-        $block['subject'] = t('Members ISK status');
-        $i = 0;
-        $iskdb = array ();
-        foreach($r_array as $a => $post) {
-            $member   = db_result(db_query('SELECT name FROM users WHERE uid="'.$post['drupalid'].'"', 2));
-            $character_url = 'http://api.eve-online.com/char/CharacterSheet.xml.aspx?apiKey='.$post['api'].'&characterID='.$post['chid'].'&userID='.$post['userid'];
-            $http_result = drupal_http_request($character_url);
-            $doc = simplexml_load_string($http_result->data);
-            list($walletl,$walletr) = split('[.]', $doc->result->balance, 2);
-
-            if ($walletl < $ctignore) {
-                $iskdb[$i]['name'] = $member;
-                $iskdb[$i]['wallet'] = $walletl;
-                $i++;
-            }
-            
-
-        }
-        $memberamount = count($iskdb);
-        $percentage = $memberamount * $ctpercent / 100;
-        $threshold = round($percentage);
-
-        for($i = 0; $i < $memberamount; $i++) {
-            if ($iskdb[$i]['wallet'] < $ctamount) {
-                $x++;
-            }
-        }
-
-        if ($x >= $threshold) {
-            $block['content'] = $x.t(' members are currently under the recommended ISK threshold. We should consider to start corp operations to build up liquidity among our members');
-        } else {
-            $block['content'] = $x.t(' member(s) are currently under the ISK threshold. We are overall over the recommended ISK threshold and can hold off carebearing for a while');
-        }
-
-
-
+    while ($value = db_fetch_array($result)) {
+      $r_array[] = $value;
     }
 
-    return $block;
+    $block['subject'] = t('Members ISK status');
+    $i = 0;
+    $iskdb = array ();
+    
+    foreach ($r_array as $a => $post) {
+      $query = "SELECT name FROM {users} WHERE uid = %d";
+      $res = db_query($query,$post['drupalid']);
+      $member = db_result($res);
+            
+      $character_url = 'http://api.eve-online.com/char/CharacterSheet.xml.aspx?apiKey='.$post['api'].'&characterID='.$post['chid'].'&userID='.$post['userid'];
+      $http_result = drupal_http_request($character_url);
+      $doc = simplexml_load_string($http_result->data);
+      list($walletl,$walletr) = split('[.]', $doc->result->balance, 2);
+
+      if ($walletl < $ctignore) {
+        $iskdb[$i]['name'] = $member;
+        $iskdb[$i]['wallet'] = $walletl;
+        $i++;
+      }
+    }
+
+    $memberamount = count($iskdb);
+    $percentage = $memberamount * $ctpercent / 100;
+    $threshold = round($percentage);
+
+    for ($i = 0; $i < $memberamount; $i++) {
+      if ($iskdb[$i]['wallet'] < $ctamount) {
+        $x++;
+      }
+    }
+
+    if ($x >= $threshold) {
+      $block['content'] = $x.' '.t('members are currently under the recommended ISK threshold. We should consider to start corp operations to build up liquidity among our members');
+    }
+    else {
+      $block['content'] = $x.' '.t('member(s) are currently under the ISK threshold. We are overall over the recommended ISK threshold and can hold off carebearing for a while');
+    }
+
+  }
+
+  return $block;
 }
 
 function eveauth_ct_validate($form, &$form_state) {
-    $enabled = $form_state['values']['ct_enable'];
-    $ctpercent = $form_state['values']['ct_percent'];
-    $ctamount = $form_state['values']['ct_amount'];
-    $ctignore = $form_state['values']['ct_ignore'];
+  $enabled = $form_state['values']['eveauth_ct_enable'];
+  $ctpercent = $form_state['values']['eveauth_ct_percent'];
+  $ctamount = $form_state['values']['eveauth_ct_amount'];
+  $ctignore = $form_state['values']['eveauth_ct_ignore'];
 
-    if ($enabled == 0) {
-        if ($ctpercent < 1 || $ctpercent > 100) {
-            form_set_error('ct_percent', t('Not a valid percentage value. Enter a number between 1 and 100'));
-        } elseif ($ctamount < 1 || $ctamount > 10000000000) {
-            form_set_error('ct_amount', t('Not a valid number. Enter a number between 1 and 10 billion'));
-        } elseif ($ctignore < 1 || $ctignore > 10000000000){
-            form_set_error('ct_amount', t('Not a valid number. Enter a number between 1 and 10 billion'));
-        }
+  if ($enabled == 0) {
+    if ($ctpercent < 1 || $ctpercent > 100) {
+      form_error('eveauth_ct_percent', t('Not a valid percentage value. Enter a number between 1 and 100'));
     }
+    elseif ($ctamount < 1 || $ctamount > 10000000000) {
+      form_error('eveauth_ct_amount', t('Not a valid number. Enter a number between 1 and 10 billion'));
+    }
+    elseif ($ctignore < 1 || $ctignore > 10000000000){
+      form_error('eveauth_ct_amount', t('Not a valid number. Enter a number between 1 and 10 billion'));
+    }
+  }
+}
+
+function eveauth_roles() {
+  $id = variable_get("eveauth_apiuser", '');
+  $key = variable_get("eveauth_apikey", '');
+  $platform = variable_get("eveauth_select_platform", '');
+  $corpname = eveauth_identify_platform_corp($platform, $id, $key);
+  $corpid = eveauth_identify_platform_corpid($platform, $id, $key);
+  $current_roles = variable_get("role_enteties", '');
+  $auth_type = variable_get("eveauth_auth_type", '');
+
+  if ($auth_type == 0) {
+    $form['role_enteties'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Create roles'),
+      '#default_value' => $corpname,
+      '#options' => array(
+        "".$corpname => $corpname,
+      ), 
+      '#description' => t('Check the box above and submit to create role for your corporation'),
+     );
+
+  if ($current_roles["".$corpname]) {
+    eveauth_create_role($corpname);
+  }
+
+    return system_settings_form($form);
+  }
+  else {
+    $alliance = array ();
+    $corps = array ();
+    $alliance = eveauth_get_alliance_name_id($platform, $id, $key);
+    $corps = eveauth_get_alliance_corps("".$alliance["id"]);
+    $count_items = count($corps[0]);
+    $form['role_enteties'] = array(
+      '#type' => 'checkboxes',
+      '#title' => $alliance["name"],
+      '#options' => array("create_alliance_roles" => "Create alliance wide roles"),
+      '#description' => t('Check the option above to create roles for all the corps within '.$alliance["name"]),
+    );
+
+    if ($current_roles["create_alliance_roles"] == "create_alliance_roles") {
+      for ($i = 0; $i < $count_items; $i++) {
+        $query = "SELECT name FROM {role} WHERE name = '%s'";
+        $res = db_query($query,$corps[1][$i]);
+        $sql_result = db_result($res);
+
+        if (!$sql_result) {
+          eveauth_create_role($corps[1][$i]);
+        }
+      }
+    }
+
+    return system_settings_form($form);
+  }
 
 }
 
-function roles() {
-    $id = variable_get("eveauth_apiuser", '');
-    $key = variable_get("eveauth_apikey", '');
-    $platform = variable_get("eveauth_select_platform", '');
-    $corpname = identify_platform_corp($platform, $id, $key);
-    $corpid = identify_platform_corpid($platform, $id, $key);
-    $current_roles = variable_get("role_enteties", '');
-    $auth_type = variable_get("eveauth_auth_type", '');
+function eveauth_create_role($title) {
+  module_load_include('inc','user','user.admin');
 
-    if ($auth_type == 0) {
-        $form['role_enteties'] = array(
-          '#type' => 'checkboxes',
-          '#title' => t('Create roles'),
-          '#default_value' => $corpname,
-          '#options' => array(
-            "".$corpname => $corpname,
-          ),
-          '#description' => t('Check the box above and submit to create role for your corporation'),
-        );
+  $form_id = "user_admin_new_role";
+  $form_values = array();
+  $form_values["name"] = $title;
+  $form_values["op"] = t('Add role');
+  $form_state = array();
+  $form_state["values"] = $form_values;
 
-        if ($current_roles["".$corpname]) {
-            create_role($corpname);
-        }
-
-         return system_settings_form($form);
-    } else {
-          $alliance = array ();
-          $corps = array ();
-          $alliance = get_alliance_name_id($platform, $id, $key);
-          $corps = get_alliance_corps("".$alliance["id"]);
-          $count_items = count($corps[0]);
-          $form['role_enteties'] = array(
-              '#type' => 'checkboxes',
-              '#title' => $alliance["name"],
-              '#options' => array("create_alliance_roles" => "Create alliance wide roles"),
-              '#description' => t('Check the option above to create roles for all the corps within '.$alliance["name"]),
-          );
-
-          if ($current_roles["create_alliance_roles"] == "create_alliance_roles") {
-              for ($i = 0; $i < $count_items; $i++) {
-                  $sql_result = db_result(db_query('SELECT name FROM role WHERE name="'.$corps[1][$i].'"', 2));
-                  if (!$sql_result) {
-                      create_role($corps[1][$i]);
-                  }
-              }
-          }
-
-          return system_settings_form($form);
-    }
-
-}
-
-function create_role($title) {
-    require_once(drupal_get_path('module', 'user') . "/user.admin.inc");
-
-        $form_id = "user_admin_new_role";
-        $form_values = array();
-        $form_values["name"] = $title;
-        $form_values["op"] = t('Add role');
-        $form_state = array();
-        $form_state["values"] = $form_values;
-
-        drupal_execute($form_id, $form_state);
+  drupal_execute($form_id, $form_state);
 }
 
 /**
@@ -291,228 +300,215 @@ function create_role($title) {
  */
 
 function eveauth_admin() {
-    $form = array ();
-    $id = variable_get("eveauth_apiuser", '');
-    $key = variable_get("eveauth_apikey", '');
-    $platform = variable_get("eveauth_select_platform", '');
-    $persistent_api = variable_get("eveauth_persistent_api", '');
-    $additional_security = variable_get("eveauth_additional_security", '');
-    $security_amount = variable_get("eveauth_additional_security_amount", '');
+  $form = array ();
+  $id = variable_get("eveauth_apiuser", '');
+  $key = variable_get("eveauth_apikey", '');
+  $platform = variable_get("eveauth_select_platform", '');
+  $persistent_api = variable_get("eveauth_persistent_api", '');
+  $additional_security = variable_get("eveauth_additional_security", '');
+  $security_amount = variable_get("eveauth_additional_security_amount", '');
 
-    $form['eveauth_auth_type'] = array (
-        '#type' => 'radios',
-        '#title' => t('Authentication type'),
-        '#default_value' => variable_get('eveauth_auth_type', 1),
-        '#options' => array (t('Corporation'), t('Alliance')),
-        '#description' => t("Select if new users will be authenticated against an alliance you are in or a corporation"),
-    );
-    $form['eveauth_persistent_api'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Persistent mode'),
-      '#default_value' => $persistent_api,
-      '#description' => t('Check the box above to require a working api at all times, not only on registration. Users generating a new api key will be forced to keep it updated on this site.'),
-    );
-    $form['additionalsecurity'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Additional security'),
-        '#collapsible' => FALSE,
-    );
-    $form['additionalsecurity']['eveauth_additional_security'] = array (
-        '#type' => 'radios',
-        '#title'=> t('Enable?'),
-        '#options' => array(t('Yes'), t('No')),
-        '#default_value' => variable_get('eveauth_additional_security', 1),
-        '#description' => t("If you want additional security upon registration you can require users to validate against their wallet. Refer to the <a href=\"http://thestate.helges.net/node/6\" target=\"_new\">documentation</a> for more information"),
-    );
+  $form['eveauth_auth_type'] = array (
+    '#type' => 'radios',
+    '#title' => t('Authentication type'),
+    '#default_value' => variable_get('eveauth_auth_type', 1),
+    '#options' => array (t('Corporation'), t('Alliance')),
+    '#description' => t("Select if new users will be authenticated against an alliance you are in or a corporation"),
+  );
 
-    if ($additional_security == 0) {
-        $form['additionalsecurity']['eveauth_additional_security_amount'] = array (
-            '#type' => 'textfield',
-            '#title'=> t('Enter Amount'),
-            '#size'=> 2,
-            '#maxlenght' => 2,
-            '#default_value' => $security_amount,
-            '#description' => t("Enter a two digit amount the user wallet will have to end with"),
-            '#required' => TRUE,
-        );
-    }
+  $form['eveauth_persistent_api'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Persistent mode'),
+    '#default_value' => $persistent_api,
+    '#description' => t('Check the box above to require a working api at all times, not only on registration. Users generating a new api key will be forced to keep it updated on this site.'),
+  );
 
+  $form['additionalsecurity'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Additional security'),
+    '#collapsible' => FALSE,
+  );
 
-    $form['eveauth_apiuser'] = array (
-        '#type' => 'textfield',
-        '#title'=> t('Your API userID'),
-        '#size'=> 8,
-        '#maxlenght' => 8,
-        '#default_value' => $id,
-        '#description' => t("Enter your userid which the site should use to fetch corp or alliance information from"),
-        '#required' => TRUE,
+  $form['additionalsecurity']['eveauth_additional_security'] = array (
+    '#type' => 'radios',
+    '#title'=> t('Enable?'),
+    '#options' => array(t('Yes'), t('No')),
+    '#default_value' => variable_get('eveauth_additional_security', 1),
+    '#description' => t("If you want additional security upon registration you can require users to validate against their wallet. Refer to the <a href=\"http://thestate.helges.net/node/6\" target=\"_new\">documentation</a> for more information"),
+  );
+
+  if ($additional_security == 0) {
+    $form['additionalsecurity']['eveauth_additional_security_amount'] = array (
+      '#type' => 'textfield',
+      '#title'=> t('Enter amount'),
+      '#size'=> 2,
+      '#maxlenght' => 2,
+      '#default_value' => $security_amount,
+      '#description' => t("Enter a two digit amount the user wallet will have to end with"),
+      '#required' => TRUE,
     );
+  }
+
+
+  $form['eveauth_apiuser'] = array (
+    '#type' => 'textfield',
+    '#title'=> t('Your api userid'),
+    '#size'=> 8,
+    '#maxlenght' => 8,
+    '#default_value' => $id,
+    '#description' => t("Enter your userid which the site should use to fetch corp or alliance information from"),
+    '#required' => TRUE,
+  );
     
-    $form['eveauth_apikey'] = array (
-        '#type' => 'textfield',
-        '#title'=> t('Your API key'),
-        '#size'=> 95,
-        '#default_value' => $key,
-        '#maxlenght' => 80,
-        '#description' => t("Enter your API key which the site should use to fetch corp or alliance information from"),
-        '#required' => TRUE,
-    );
+  $form['eveauth_apikey'] = array (
+    '#type' => 'textfield',
+    '#title'=> t('Your api key'),
+    '#size'=> 95,
+    '#default_value' => $key,
+    '#maxlenght' => 80,
+    '#description' => t("Enter your API key which the site should use to fetch corp or alliance information from"),
+    '#required' => TRUE,
+  );
 
-    $form['eveauth_message'] = array (
-        '#type' => 'textarea',
-        '#title'=> t('Message upon registration'),
-        '#default_value'=> t('To be allegible for registration, please enter your <strong>limited</strong> eve API userid and API key in the form below. You can get your API credentials from the Eve online website at http://www.eve-online.com/api/default.asp. When you are registered you need to verify your credentials by editing your user profile and selecting which character to use at this website'),
-        '#size' => 5,
-        '#maxlength' => 800,
-        '#description' => t("This message will be shown to enyone registering on this site above the API form"),
-        '#required' => FALSE,
-     );
-    if ($id && $key) {
-            $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;
-            $http_result = drupal_http_request($api_url);
+  $form['eveauth_message'] = array (
+    '#type' => 'textarea',
+    '#title'=> t('Message upon registration'),
+    '#default_value'=> t('To be allegible for registration, please enter your <strong>limited</strong> eve API userid and API key in the form below. You can get your API credentials from the Eve online website at http://www.eve-online.com/api/default.asp. When you are registered you need to verify your credentials by editing your user profile and selecting which character to use at this website'),
+    '#size' => 5,
+    '#maxlength' => 800,
+    '#description' => t("This message will be shown to enyone registering on this site above the API form"),
+    '#required' => FALSE,
+  );
 
-            if ($http_result->code == 200) {
-                $doc = simplexml_load_string($http_result->data);
-                
-                
-
-                   
-                $count_items = count($doc->result->rowset->row);
-
-                $player_name = array ();
-                for ($i = 0; $i < $count_items; $i++) {
-                    $player_name[$i] = $doc->result->rowset->row[$i]->attributes()->name;
-                }
-
-                if ($count_items < 1) {
-                    drupal_set_message("Unable to fetch user information for the supplied userid and API key. Either the information you supplied are incorrect or the API server is down",'error');
-                } else {
-                 $form['eveauth_select_platform'] = array (
-                    '#type' => 'radios',
-                    '#title' => t('Select Character'),
-                    '#default_value' => variable_get('eveauth_select_platform', 1),
-                    '#options' => $player_name,
-                    '#description' => t("Select the character who are in the corporation or alliance you want new users to be in in order to be able to register at this site"),
-                  );                   
-                }
-
-                
-            }
-
-    }
-      
-
-  
-    return system_settings_form($form);
-}
-
-function identify_platform_corpid($pid, $id, $key) {
-     $authurl = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;
-     
-     $http_result = drupal_http_request($authurl);
-     $doc = simplexml_load_string($http_result->data);
-
-     $count_items = count($doc->result->rowset->row);
-     $player_id = array ();
-     for ($i = 0; $i < $count_items; $i++) {
-        $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->corporationID;
-     }
-
-    return $player_id[$pid];
-
-}
-
-function get_alliance_name_id($pid, $id, $key) {
-    $characterid = identify_platform_id($pid, $id, $key);
-    $corpurl = 'http://api.eve-online.com/corp/CorporationSheet.xml.aspx?userID='.$id.'&apiKey='.$key.'&characterID='.$characterid;
-
-    $http_result = drupal_http_request($corpurl);
-    $doc = simplexml_load_string($http_result->data);
-
-    $alliance = array ();
-    $alliance["id"] = $doc->result->allianceID;
-    $alliance["name"] = $doc->result->allianceName;
-
-    return $alliance;
-
-}
-
-function get_alliance_corps($id) {
-    $url = 'http://api.eve-online.com/eve/AllianceList.xml.aspx';
-
-    $http_result = drupal_http_request($url);
-    $doc = simplexml_load_string($http_result->data);
-
-    $key = array ();
-    $name = array ();
-    $corporation = array ();
-    $count_items = count($doc->result->rowset->row);
-    for ($i = 0; $i < $count_items; $i++) {
-        if ($doc->result->rowset->row[$i]->attributes()->allianceID == $id) {
-            $count_corps = count($doc->result->rowset->row[$i]->rowset->row);
-            for ($x = 0; $x < $count_corps; $x++) {
-                $key[$x] = $doc->result->rowset->row[$i]->rowset->row[$x]->attributes()->corporationID;
-                $corporationid = $key[$x];
-                $sheeturi = 'http://api.eve-online.com/corp/CorporationSheet.xml.aspx?corporationID='.$corporationid;
-                $http2_result = drupal_http_request($sheeturi);
-                $sheet = simplexml_load_string($http2_result->data);
-                $name[$x] = $sheet->result->corporationName;
-            }
-        }
-    }
-    $corporation[0] = $key;
-    $corporation[1] = $name;
-    return $corporation;
-
-
-}
-
-function identify_platform_corp($pid, $id, $key) {
-     $authurl = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;
-     
-     $http_result = drupal_http_request($authurl);
-     $doc = simplexml_load_string($http_result->data);
-
-     $count_items = count($doc->result->rowset->row);
-     $player_id = array ();
-     for ($i = 0; $i < $count_items; $i++) {
-        $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->corporationName;
-     }
-
-    return $player_id[$pid];
-
-}
-
-function identify_platform_id($pid, $id, $key) {
-     $authurl = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;
-     
-     $http_result = drupal_http_request($authurl);
-     $doc = simplexml_load_string($http_result->data);
-
-     $count_items = count($doc->result->rowset->row);
-     $player_id = array ();
-     for ($i = 0; $i < $count_items; $i++) {
-        $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->characterID;
-     }
-
-    return $player_id[$pid];
-
-}
-
-function identify_platform($pid, $id, $key) {
+  if ($id && $key) {
     $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;
     $http_result = drupal_http_request($api_url);
 
-    $doc = simplexml_load_string($http_result->data);
-    $count_items = count($doc->result->rowset->row);
+    if ($http_result->code == 200) {
+      $doc = simplexml_load_string($http_result->data);
+      $count_items = count($doc->result->rowset->row);
+      $player_name = array ();
 
-    $player_name = array ();
-    for ($i = 0; $i < $count_items; $i++) {
+      for ($i = 0; $i < $count_items; $i++) {
         $player_name[$i] = $doc->result->rowset->row[$i]->attributes()->name;
+      }
+
+      if ($count_items < 1) {
+        drupal_set_message(t('Unable to fetch user information for the supplied userid and API key. Either the information you supplied are incorrect or the API server is down'),'error');
+      }
+      else {
+        $form['eveauth_select_platform'] = array (
+          '#type' => 'radios',
+          '#title' => t('Select Character'),
+          '#default_value' => variable_get('eveauth_select_platform', 1),
+          '#options' => $player_name,
+          '#description' => t("Select the character who are in the corporation or alliance you want new users to be in in order to be able to register at this site"),
+        );                   
+      }           
     }
+  }
+  return system_settings_form($form);
+}
 
-    return $player_name[$pid];
+function eveauth_identify_platform_corpid($pid, $id, $key) {
+  $authurl = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;
+  $http_result = drupal_http_request($authurl);
+  $doc = simplexml_load_string($http_result->data);
+  $count_items = count($doc->result->rowset->row);
+  $player_id = array ();
 
+  for ($i = 0; $i < $count_items; $i++) {
+    $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->corporationID;
+  }
+
+  return $player_id[$pid];
+}
+
+function eveauth_get_alliance_name_id($pid, $id, $key) {
+  $characterid = eveauth_identify_platform_id($pid, $id, $key);
+  $corpurl = 'http://api.eve-online.com/corp/CorporationSheet.xml.aspx?userID='.$id.'&apiKey='.$key.'&characterID='.$characterid;
+
+  $http_result = drupal_http_request($corpurl);
+  $doc = simplexml_load_string($http_result->data);
+
+  $alliance = array ();
+  $alliance["id"] = $doc->result->allianceID;
+  $alliance["name"] = $doc->result->allianceName;
+
+  return $alliance;
+}
+
+function eveauth_get_alliance_corps($id) {
+  $url = 'http://api.eve-online.com/eve/AllianceList.xml.aspx';
+  $http_result = drupal_http_request($url);
+  $doc = simplexml_load_string($http_result->data);
+
+  $key = array ();
+  $name = array ();
+  $corporation = array ();
+  $count_items = count($doc->result->rowset->row);
+
+  for ($i = 0; $i < $count_items; $i++) {
+    if ($doc->result->rowset->row[$i]->attributes()->allianceID == $id) {
+      $count_corps = count($doc->result->rowset->row[$i]->rowset->row);
+      for ($x = 0; $x < $count_corps; $x++) {
+        $key[$x] = $doc->result->rowset->row[$i]->rowset->row[$x]->attributes()->corporationID;
+        $corporationid = $key[$x];
+        $sheeturi = 'http://api.eve-online.com/corp/CorporationSheet.xml.aspx?corporationID='.$corporationid;
+        $http2_result = drupal_http_request($sheeturi);
+        $sheet = simplexml_load_string($http2_result->data);
+        $name[$x] = $sheet->result->corporationName;
+      }
+    }
+  }
+
+  $corporation[0] = $key;
+  $corporation[1] = $name;
+  return $corporation;
+}
+
+function eveauth_identify_platform_corp($pid, $id, $key) {
+  $authurl = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;
+  $http_result = drupal_http_request($authurl);
+  $doc = simplexml_load_string($http_result->data);
+
+  $count_items = count($doc->result->rowset->row);
+  $player_id = array ();
+  for ($i = 0; $i < $count_items; $i++) {
+    $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->corporationName;
+  }
+
+  return $player_id[$pid];
+}
+
+function eveauth_identify_platform_id($pid, $id, $key) {
+  $authurl = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;   
+  $http_result = drupal_http_request($authurl);
+  $doc = simplexml_load_string($http_result->data);
+
+  $count_items = count($doc->result->rowset->row);
+  $player_id = array ();
+
+  for ($i = 0; $i < $count_items; $i++) {
+    $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->characterID;
+  }
+
+  return $player_id[$pid];
+}
+
+function eveauth_identify_platform($pid, $id, $key) {
+  $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$key.'&userID='.$id;
+  $http_result = drupal_http_request($api_url);
+  $doc = simplexml_load_string($http_result->data);
+  $count_items = count($doc->result->rowset->row);
+
+  $player_name = array ();
+
+  for ($i = 0; $i < $count_items; $i++) {
+    $player_name[$i] = $doc->result->rowset->row[$i]->attributes()->name;
+  }
+
+  return $player_name[$pid];
 }
 
 /**
@@ -520,224 +516,254 @@ function identify_platform($pid, $id, $key) {
  */
 
 function eveauth_form_user_profile_form_alter(&$form, $form_state) {
+  if (user_access('administer users')) {
+    return;
+  }
 
-    if (user_access('administer users')) {
-        return;
+  global $user;
+  $id = variable_get("eveauth_apiuser", '');
+  $key = variable_get("eveauth_apikey", '');
+  $platform = variable_get("eveauth_select_platform", '');
+  $auth_type = variable_get("eveauth_auth_type", '');
+    
+
+
+    
+  $query_user_api = "SELECT api FROM {eveauth} WHERE drupalid = %d";
+  $query_user_id = "SELECT userid FROM {eveauth} WHERE drupalid = %d";
+  $query_authenticated = "SELECT auth FROM {eveauth} WHERE drupalid = %d";
+
+  $res_user_api = db_query($query_user_api,$user->uid);
+  $res_user_id = db_query($query_user_id,$user->uid);
+  $res_authenticated = db_query($query_authenticated,$user->uid);
+
+  $user_api = db_result($res_user_api);
+  $user_id = db_result($res_user_id);
+  $authenticated = db_result($res_authenticated);
+    
+  $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$user_api.'&userID='.$user_id;
+  $http_result = drupal_http_request($api_url);
+  $doc = simplexml_load_string($http_result->data);
+
+  $count_items = count($doc->result->rowset->row);
+  if ($auth_type == 0) {
+    $corpname = eveauth_identify_platform_corp($platform, $id, $key);
+    $form['api'] = array(
+      '#type' => 'fieldset',
+      '#title' => $corpname.' '.t('api validation'),
+      '#description' => t("To be allegible for full access to the site you need to select which character you are holding which is a part of")." ".$corpname.". ".t("In some cases, depending on the settings of the site you also need to provide an updated and at all times working api key"),
+      '#weight' => 5,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+
+    $form['api']['apikey'] = array (
+      '#type' => 'textfield',
+      '#title'=> t('Your api key'),
+      '#size'=> 95,
+      '#maxlenght' => 80,
+      '#default_value' => $user_api,
+      '#description' => t("Provide a working and updated version of your <strong>limited</strong> api key here"),
+      '#element_validate' => array('eveauth_character_validate'),
+      '#required' => TRUE,
+    );
+
+    if ($count_items < 1) {
+      drupal_set_message(t('Unable to fetch user information for the supplied api key. Either the information you supplied are incorrect or the api server is down'),'error', FALSE);
+    }
+    else {
+      $player_names = array ();
+      for ($i = 0; $i < $count_items; $i++) {
+        $player_names[$i] = $doc->result->rowset->row[$i]->attributes()->name;
+      }
+
+      $form['api']['character'] = array (
+        '#type' => 'radios',
+        '#title' => t('Select character'),
+        '#options' => $player_names,
+        '#element_validate' => array('eveauth_character_validate'),
+        '#description' => t("Select which character is in ".$corpname),
+      );
+
     }
 
-    global $user;
-    $id = variable_get("eveauth_apiuser", '');
-    $key = variable_get("eveauth_apikey", '');
-    $platform = variable_get("eveauth_select_platform", '');
-    $auth_type = variable_get("eveauth_auth_type", '');
-    
+  } 
+  else { // If auth_type != 0 then return form for alliance api validation
+    $alliance = eveauth_get_alliance_name_id($platform, $id, $key);
+    $form['api'] = array(
+      '#type' => 'fieldset',
+      '#title' => $alliance["name"].' '.t('api validation'),
+      '#description' => t("To be allegible for full access to the site you need to select which character you are holding which is a part of")." ".$alliance["name"].". ".t("In some cases, depending on the settings of the site you also need to provide an updated and working api key"),
+      '#weight' => 5,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
 
+    $form['api']['apikey'] = array (
+      '#type' => 'textfield',
+      '#title'=> t('Your api key'),
+      '#size'=> 95,
+      '#maxlenght' => 80,
+      '#default_value' => $user_api,
+      '#description' => t("Provide a working and updated version of your <strong>limited</strong> api key here"),
+      '#element_validate' => array('eveauth_character_validate'),
+      '#required' => TRUE,
+    );
 
-    
+    if ($count_items < 1) {
+      drupal_set_message(t('Unable to fetch user information for the supplied api key. Either the information you supplied are incorrect or the api server is down'),'error', FALSE);
+    }
+    else {
+      $player_names = array ();
+      for ($i = 0; $i < $count_items; $i++) {
+        $player_names[$i] = $doc->result->rowset->row[$i]->attributes()->name;
+      }
 
-    $user_api   = db_result(db_query('SELECT api FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-    $user_id    = db_result(db_query('SELECT userid FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-    $authenticated = db_result(db_query('SELECT auth FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
+      $form['api']['character'] = array (
+        '#type' => 'radios',
+        '#title' => t('Select character'),
+        '#options' => $player_names,
+        '#element_validate' => array('eveauth_character_validate'),
+        '#description' => t("Select which character is in ".$alliance["name"]),
+      );
 
-    $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$user_api.'&userID='.$user_id;
-    $http_result = drupal_http_request($api_url);
-    $doc = simplexml_load_string($http_result->data);
-
-    $count_items = count($doc->result->rowset->row);
-
-    
-    
-        if ($auth_type == 0) {
-            $corpname = identify_platform_corp($platform, $id, $key);
-            $form['api'] = array(
-                 '#type' => 'fieldset',
-                 '#title' => t($corpname.' API validation'),
-                 '#description' => t("To be allegible for full access to the site you need to select which character you are holding which is a part of ".$corpname.". In some cases, depending on the settings of the site you also need to provide an updated and at all times working API key"),
-                 '#weight' => 5,
-                 '#collapsible' => TRUE,
-                 '#collapsed' => FALSE,
-             );
-
-            $form['api']['apikey'] = array (
-                '#type' => 'textfield',
-                '#title'=> t('Your API key'),
-                '#size'=> 95,
-                '#maxlenght' => 80,
-                '#default_value' => $user_api,
-                '#description' => t("Provide a working and updated version of your LIMITED api key here"),
-                '#element_validate' => array('eveauth_character_validate'),
-                '#required' => TRUE,
-            );
-
-            if ($count_items < 1) {
-                drupal_set_message("Unable to fetch user information for the supplied API key. Either the information you supplied are incorrect or the API server is down",'error', FALSE);
-            } else {
-                $player_names = array ();
-                for ($i = 0; $i < $count_items; $i++) {
-                    $player_names[$i] = $doc->result->rowset->row[$i]->attributes()->name;
-                }
-                $form['api']['character'] = array (
-                    '#type' => 'radios',
-                    '#title' => t('Select Character'),
-                    '#options' => $player_names,
-                    '#element_validate' => array('eveauth_character_validate'),
-                    '#description' => t("Select which character is in ".$corpname),
-                );
-
-
-
-            }
-
-        } else {
-            $alliance = get_alliance_name_id($platform, $id, $key);
-            $form['api'] = array(
-                '#type' => 'fieldset',
-                '#title' => t($alliance["name"].' API validation'),
-                '#description' => t("To be allegible for full access to the site you need to select which character you are holding which is a part of ".$alliance["name"].". In some cases, depending on the settings of the site you also need to provide an updated and working API key"),
-                '#weight' => 5,
-                '#collapsible' => TRUE,
-                '#collapsed' => FALSE,
-            );
-
-            $form['api']['apikey'] = array (
-                '#type' => 'textfield',
-                '#title'=> t('Your API key'),
-                '#size'=> 95,
-                '#maxlenght' => 80,
-                '#default_value' => $user_api,
-                '#description' => t("Provide a working and updated version of your LIMITED api key here"),
-                '#element_validate' => array('eveauth_character_validate'),
-                '#required' => TRUE,
-            );
-            if ($count_items < 1) {
-                drupal_set_message("Unable to fetch user information for the supplied API key. Either the information you supplied are incorrect or the API server is down",'error', FALSE);
-            } else {
-                $player_names = array ();
-                for ($i = 0; $i < $count_items; $i++) {
-                    $player_names[$i] = $doc->result->rowset->row[$i]->attributes()->name;
-                }
-                $form['api']['character'] = array (
-                    '#type' => 'radios',
-                    '#title' => t('Select Character'),
-                    '#options' => $player_names,
-                    '#element_validate' => array('eveauth_character_validate'),
-                    '#description' => t("Select which character is in ".$alliance["name"]),
-                );
-            }
-        }
+    }
+  }
 }
 
 function eveauth_character_validate($form, &$form_state) {
-    global $user;
-    $additional_security = variable_get("eveauth_additional_security", '');
-    $security_amount = variable_get("eveauth_additional_security_amount", '');
-    $character = $form_state['values']['character'];
-    $valuekey = $form_state['values']['apikey'];
+  global $user;
+  $additional_security = variable_get("eveauth_additional_security", '');
+  $security_amount = variable_get("eveauth_additional_security_amount", '');
+  $character = $form_state['values']['character'];
+  $valuekey = $form_state['values']['apikey'];
     
-    if ($character == "") {
-        $user_api   = db_result(db_query('SELECT api FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-        $user_id    = db_result(db_query('SELECT userid FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-        
-        if ($valuekey != $user_api) {
-            $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$valuekey.'&userID='.$user_id;
-            $http_result = drupal_http_request($api_url);
-            $doc = simplexml_load_string($http_result->data);
-            $count_items = count($doc->result->rowset->row);
+  if ($character == "") {
+    $query_user_api = "SELECT api FROM {eveauth} WHERE drupalid = %d";
+    $query_user_id = "SELECT userid FROM {eveauth} WHERE drupalid = %d";
 
-                if ($count_items < 1) {
-                    drupal_set_message("Unable to fetch user information for the supplied API key. Either the information you supplied are incorrect or the API server is down. Reverting to old key",'error', FALSE);
-                } else {
-                    $dbupdate = db_query('UPDATE eveauth SET api="'.$valuekey.'" WHERE drupalid='.$user->uid);
-                }
-        }
-        return;
-    }
-    
-    
-    $user_api   = db_result(db_query('SELECT api FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-    $user_id    = db_result(db_query('SELECT userid FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-    $authenticated = db_result(db_query('SELECT auth FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-    $char_id    = db_result(db_query('SELECT chid FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
+    $res_user_api = db_query($query_user_api,$user->uid);
+    $res_user_id = db_query($query_user_id,$user->uid);
 
-    
+    $user_api = db_result($res_user_api);
+    $user_id = db_result($res_user_id);
+     
     if ($valuekey != $user_api) {
-        $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$valuekey.'&userID='.$user_id;
-        $http_result = drupal_http_request($api_url);
-        $doc = simplexml_load_string($http_result->data);
-        $count_items = count($doc->result->rowset->row);
+      $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$valuekey.'&userID='.$user_id;
+      $http_result = drupal_http_request($api_url);
+      $doc = simplexml_load_string($http_result->data);
+      $count_items = count($doc->result->rowset->row);
 
-        if ($count_items < 1) {
-            drupal_set_message("Unable to fetch user information for the supplied API key. Either the information you supplied are incorrect or the API server is down. Reverting to old key",'error', FALSE);
-        } else {
-            $dbupdate = db_query('UPDATE eveauth SET api='.$valuekey.' WHERE drupalid='.$user->uid);
-        }
+      if ($count_items < 1) {
+        drupal_set_message(t('Unable to fetch user information for the supplied API key. Either the information you supplied are incorrect or the API server is down. Reverting to old key'),'error', FALSE);
+      }
+      else {
+        $dbupdate = db_query('UPDATE {eveauth} SET api="'.$valuekey.'" WHERE drupalid='.$user->uid);
+      }
     }
+    return;
+  }
+    
+  $query_user_api = "SELECT api FROM {eveauth} WHERE drupalid = %d";
+  $query_user_id = "SELECT userid FROM {eveauth} WHERE drupalid = %d";
+  $query_authenticated = "SELECT auth FROM {eveauth} WHERE drupalid = %d";
+  $query_char_id = "SELECT chid FROM {eveauth} WHERE drupalid = %d";
 
-    $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$user_api.'&userID='.$user_id;
+  $res_user_api = db_query($query_user_api,$user->uid);
+  $res_user_id = db_query($query_user_id,$user->uid);
+  $res_authenticated = db_query($query_authenticated,$user->uid);
+  $res_char_id = db_query($query_char_id,$user->uid);
+
+  $user_api = db_result($res_user_api);
+  $user_id = db_result($res_user_id);
+  $authenticated = db_result($res_authenticated);
+  $char_id = db_result($res_char_id);
+
+    
+  if ($valuekey != $user_api) {
+    $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$valuekey.'&userID='.$user_id;
     $http_result = drupal_http_request($api_url);
     $doc = simplexml_load_string($http_result->data);
-
     $count_items = count($doc->result->rowset->row);
-    $player_id = array ();
-    for ($i = 0; $i < $count_items; $i++) {
-       $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->corporationName;
+
+    if ($count_items < 1) {
+      drupal_set_message(t('Unable to fetch user information for the supplied API key. Either the information you supplied are incorrect or the API server is down. Reverting to old key'),'error', FALSE);
     }
-
-    $character_id = array ();
-    for ($i = 0; $i < $count_items; $i++) {
-        $character_id[$i] = $doc->result->rowset->row[$i]->attributes()->characterID;
+    else {
+      $dbupdate = db_query('UPDATE eveauth SET api='.$valuekey.' WHERE drupalid='.$user->uid);
     }
+  }
 
-    $characterCorpName = $player_id[$character];
-    $characterIdent = $character_id[$character];
-    
-    update_sql('UPDATE eveauth SET chid='.$characterIdent.' WHERE drupalid='.$user->uid);
-    if ($additional_security == 1) {
-        update_sql('UPDATE eveauth SET auth=1 WHERE drupalid='.$user->uid);
-    } else {
-        if ($authenticated == 0) {
-            $character_url = 'http://api.eve-online.com/char/CharacterSheet.xml.aspx?apiKey='.$user_api.'&characterID='.$characterIdent.'&userID='.$user_id;
-            $http_result = drupal_http_request($character_url);
-            $doc = simplexml_load_string($http_result->data);
-            list($walletl,$walletr) = split('[.]', $doc->result->balance, 2);
-            if ($walletr != $security_amount) {
-                return drupal_set_message("Security check failed! Your wallet balance does not match the needed value. Make sure your wallet balance ends in .".$security_amount." (example: 874941360.".$security_amount."), then try to re-select your character (or select a different one). For your information, your wallet now ends in .".$walletr, 'error', FALSE);
-            }
-        }
-        
-    }
+  $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$user_api.'&userID='.$user_id;
+  $http_result = drupal_http_request($api_url);
+  $doc = simplexml_load_string($http_result->data);
 
+  $count_items = count($doc->result->rowset->row);
+  $player_id = array ();
 
+  for ($i = 0; $i < $count_items; $i++) {
+    $player_id[$i] = $doc->result->rowset->row[$i]->attributes()->corporationName;
+  }
 
-    $roles = db_query('SELECT name FROM role');
-    $validate = 0;
-    while ($item = db_fetch_array($roles)) {
-        if ($characterCorpName == $item['name']) {
-            $validate = 1;
-            $rid    = db_result(db_query('SELECT rid FROM role WHERE name="'.$characterCorpName.'"', 2));
-            $chk    = db_result(db_query('SELECT rid FROM users_roles WHERE uid='.$user->uid));
-            if ($rid == $chk) {
-               form_set_error('character', t("Your user has already been registered for the appropriate roles and you have the access you should have"));
-            } else {
-                $data = array (
-                    'uid'   => $user->uid,
-                    'rid'   => $rid,
-                );
-
-                drupal_write_record('users_roles',$data);
-
-                
-                drupal_set_message("Registration successfull. Your user has been granted the appropriate roles for a member in ".$characterCorpName,'status', FALSE);
-            }
+  $character_id = array ();
  
-        }
+  for ($i = 0; $i < $count_items; $i++) {
+    $character_id[$i] = $doc->result->rowset->row[$i]->attributes()->characterID;
+  }
+
+  $characterCorpName = $player_id[$character];
+  $characterIdent = $character_id[$character];
+    
+  update_sql('UPDATE eveauth SET chid='.$characterIdent.' WHERE drupalid='.$user->uid);
+  if ($additional_security == 1) {
+        update_sql('UPDATE eveauth SET auth=1 WHERE drupalid='.$user->uid);
+  }
+  else {
+    if ($authenticated == 0) {
+      $character_url = 'http://api.eve-online.com/char/CharacterSheet.xml.aspx?apiKey='.$user_api.'&characterID='.$characterIdent.'&userID='.$user_id;
+      $http_result = drupal_http_request($character_url);
+      $doc = simplexml_load_string($http_result->data);
+      list($walletl,$walletr) = split('[.]', $doc->result->balance, 2);
+      if ($walletr != $security_amount) {
+        drupal_set_message(t('Security check failed! Your wallet balance does not match the needed value. Make sure your wallet balance ends in').' '.$security_amount.' '.t('(example: 874941360.').$security_amount.'), '.t('then try to re-select your character (or select a different one). For your information, your wallet now ends in').' '.$walletr, 'error', FALSE);
+        return;
+      }
     }
+  }
 
-    if ($validate == 0) {
-        form_set_error('character', t("This character does not belong in this organization. It is currently a member of ".$characterCorpName.". For the time being your registration has been denied, maybe you have to apply to the organization first or wait untill your application has been approved?"));
+  $roles = db_query('SELECT name FROM {role}');
+  $validate = 0;
+  while ($item = db_fetch_array($roles)) {
+    if ($characterCorpName == $item['name']) {
+      $validate = 1;
+      $query_rid = "SELECT rid FROM {role} WHERE name = '%s'";
+      $query_chk = "SELECT chk FROM {users_roles} WHERE uid = %d";
+
+      $res_rid = db_query($query_rid,$characterCorpName);
+      $res_chk = db_query($query_chk,$user->uid);
+
+      $rid = db_result($res_rid);
+      $chk = db_result($res_chk);
+
+      if ($rid == $chk) {
+        form_error('character', t("Your user has already been registered for the appropriate roles and you have the access you should have"));
+      }
+      else {
+        $data = array (
+          'uid'   => $user->uid,
+          'rid'   => $rid,
+        );
+
+        drupal_write_record('users_roles',$data);
+       
+        drupal_set_message(t('Registration successfull. Your user has been granted the appropriate roles for a member in').' '.$characterCorpName,'status', FALSE);
+      }
     }
+  }
 
-
+  if ($validate == 0) {
+    form_error('character', t('This character does not belong in this organization. It is currently a member of').' '.$characterCorpName.' '.t('For the time being your registration has been denied, maybe you have to apply to the organization first or wait untill your application has been approved?'));
+  }
 }
 
 /**
@@ -745,104 +771,105 @@ function eveauth_character_validate($form, &$form_state) {
  */
 
 function eveauth_form_user_register_alter(&$form, $form_state) {
+  if (user_access('administer users')) {
+    return;
+  }
 
-    if (user_access('administer users')) {
-        return;
+
+  $id = variable_get("eveauth_apiuser", '');
+  $key = variable_get("eveauth_apikey", '');
+  $platform = variable_get("eveauth_select_platform", '');
+  $auth_type = variable_get("eveauth_auth_type", '');
+  $apimessage = variable_get("eveauth_message", '');
+
+
+  if ($auth_type == 0) {
+    $corpname = eveauth_identify_platform_corp($platform, $id, $key);
+    $form['api'] = array(
+      '#type' => 'fieldset',
+      '#title' => $corpname.' '.t('api validation'),
+      '#description' => $apimessage,
+      '#weight' => 5,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+
+    $form['api']['apiuser'] = array (
+      '#type' => 'textfield',
+      '#title'=> t('Your user id'),
+      '#size'=> 8,
+      '#maxlenght' => 8,
+      '#description' => t("Please enter your user id"),
+      '#element_validate' => array('eveauth_register_validation'),
+      '#required' => TRUE,
+    );
+
+    $form['api']['apikey'] = array (
+      '#type' => 'textfield',
+      '#title'=> t('Your api key'),
+      '#size'=> 95,
+      '#maxlenght' => 80,
+      '#description' => t("Please enter your <strong>limited</strong> api key."),
+      '#element_validate' => array('eveauth_register_validation'),
+      '#required' => TRUE,
+    );  
+
     }
+   else {
+     $alliance = eveauth_get_alliance_name_id($platform, $id, $key);
+     $form['api'] = array(
+       '#type' => 'fieldset',
+       '#title' => $alliance["name"].' '.t('validation'),
+       '#description' => $apimessage,
+       '#weight' => 5,
+       '#collapsible' => TRUE,
+       '#collapsed' => FALSE,
+     );
 
+     $form['api']['apiuser'] = array (
+       '#type' => 'textfield',
+       '#title'=> t('Your user id'),
+       '#size'=> 8,
+       '#maxlenght' => 8,
+       '#description' => t("Please enter your user id"),
+       '#element_validate' => array('eveauth_register_validation'),
+       '#required' => TRUE,
+     );
 
-    $id = variable_get("eveauth_apiuser", '');
-    $key = variable_get("eveauth_apikey", '');
-    $platform = variable_get("eveauth_select_platform", '');
-    $auth_type = variable_get("eveauth_auth_type", '');
-    $apimessage = variable_get("eveauth_message", '');
-
-
-        if ($auth_type == 0) {
-           $corpname = identify_platform_corp($platform, $id, $key);
-           $form['api'] = array(
-                '#type' => 'fieldset',
-                '#title' => t($corpname.' API validation'),
-                '#description' => $apimessage,
-                '#weight' => 5,
-                '#collapsible' => TRUE,
-                '#collapsed' => FALSE,
-            );
-             $form['api']['apiuser'] = array (
-                '#type' => 'textfield',
-                '#title'=> t('Your user ID'),
-                '#size'=> 8,
-                '#maxlenght' => 8,
-                '#description' => t("Please enter your user id"),
-                '#element_validate' => array('eveauth_register_validation'),
-                '#required' => TRUE,
-            );
-
-            $form['api']['apikey'] = array (
-                '#type' => 'textfield',
-                '#title'=> t('Your API key'),
-                '#size'=> 95,
-                '#maxlenght' => 80,
-                '#description' => t("Please enter your LIMITED api key."),
-                '#element_validate' => array('eveauth_register_validation'),
-                '#required' => TRUE,
-            );  
-
-        } else {
-            $alliance = get_alliance_name_id($platform, $id, $key);
-            $form['api'] = array(
-                '#type' => 'fieldset',
-                '#title' => t($alliance["name"].' API validation'),
-                '#description' => $apimessage,
-                '#weight' => 5,
-                '#collapsible' => TRUE,
-                '#collapsed' => FALSE,
-            );
-
-            $form['api']['apiuser'] = array (
-                '#type' => 'textfield',
-                '#title'=> t('Your user ID'),
-                '#size'=> 8,
-                '#maxlenght' => 8,
-                '#description' => t("Please enter your user id"),
-                '#element_validate' => array('eveauth_register_validation'),
-                '#required' => TRUE,
-            );
-
-            $form['api']['apikey'] = array (
-                '#type' => 'textfield',
-                '#title'=> t('Your API key'),
-                '#size'=> 95,
-                '#maxlenght' => 80,
-                '#description' => t("Please enter your LIMITED api key."),
-                '#element_validate' => array('eveauth_register_validation'),
-                '#required' => TRUE,
-            );  
-        }
-
-    
-
+     $form['api']['apikey'] = array (
+       '#type' => 'textfield',
+       '#title'=> t('Your api key'),
+       '#size'=> 95,
+       '#maxlenght' => 80,
+       '#description' => t("Please enter your <strong>limited</strong> api key."),
+       '#element_validate' => array('eveauth_register_validation'),
+       '#required' => TRUE,
+     );  
+   }
 }
 
 function eveauth_register_validation($form, &$form_state) {
-    $username = $form_state['values']['name'];
-    $valueuser = $form_state['values']['apiuser'];
-    $valuekey = $form_state['values']['apikey'];
+  $username = $form_state['values']['name'];
+  $valueuser = $form_state['values']['apiuser'];
+  $valuekey = $form_state['values']['apikey'];
 
-    $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$valuekey.'&userID='.$valueuser;
-    $http_result = drupal_http_request($api_url);
-    $doc = simplexml_load_string($http_result->data);
-    $count_items = count($doc->result->rowset->row);
+  $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$valuekey.'&userID='.$valueuser;
+  $http_result = drupal_http_request($api_url);
+  $doc = simplexml_load_string($http_result->data);
+  $count_items = count($doc->result->rowset->row);
 
-    if ($count_items < 1) {
-        form_set_error('apiuser', t('Invalid API credentials supplied, system could not retrieve your account information or the eve api server is down. Verify that Tranquility is running and try again.'));
-    } else {
-      $sql_result = db_result(db_query('SELECT userid FROM eveauth WHERE userid="'.$valueuser.'"', 2));
-      if ($sql_result == $valueuser) {
-        form_set_error('apiuser', t('There is already a user registered with your API credentials. Please contact the system administrator.'));
-      }
+  if ($count_items < 1) {
+      form_error('apiuser', t('Invalid API credentials supplied, system could not retrieve your account information or the eve api server is down. Verify that Tranquility is running and try again.'));
+  }
+  else {
+    $query_uid = "SELECT userid FROM {eveauth} WHERE userid = %d";
+    $res_uid = db_query($query_uid,$valueuser);
+    $sql_result = db_result($res_uid);
+
+    if ($sql_result == $valueuser) {
+      form_error('apiuser', t('There is already a user registered with your API credentials. Please contact the system administrator.'));
     }
-
+  }
 }
 
 /**
@@ -850,48 +877,51 @@ function eveauth_register_validation($form, &$form_state) {
  */
 
 function eveauth_user ($op, &$edit, &$account, $category = NULL) {
-    global $user;
-    $persistent_api = variable_get("eveauth_persistent_api", '');
-    $url = drupal_get_path_alias($_GET['q']);
-    if ($persistent_api == 1 && !user_access('administer users')) {
-        if (user_is_logged_in() && $url != "user/".$user->uid."/edit") {
-            global $user;
-            $user_api   = db_result(db_query('SELECT api FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-            $user_id    = db_result(db_query('SELECT userid FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
+  global $user;
+  $persistent_api = variable_get("eveauth_persistent_api", '');
+  $url = drupal_get_path_alias($_GET['q']);
+  if ($persistent_api == 1 && !user_access('administer users')) {
+    if (user_is_logged_in() && $url != "user/".$user->uid."/edit") {
+      global $user;
 
+      $query_api = "SELECT api FROM {eveauth} WHERE drupalid = %d";
+      $res_api = db_query($query_api,$user->uid);
+      $user_api = db_result($res_api);
 
-            $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$user_api.'&userID='.$user_id;
-            $http_result = drupal_http_request($api_url);
-            $doc = simplexml_load_string($http_result->data);
+      $query_user = "SELECT userid FROM {eveauth} WHERE drupalid = %d";
+      $res_user = db_query($query_user,$user->uid);
+      $user_id = db_result($res_user);
 
-            $count_items = count($doc->result->rowset->row);
+      $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$user_api.'&userID='.$user_id;
+      $http_result = drupal_http_request($api_url);
+      $doc = simplexml_load_string($http_result->data);
 
-            if ($count_items < 1) {
-                drupal_set_message("Your account do not authenticate against the API layer. Please correct this by visiting your account page and update your credentials. If you had any roles those are now dropped until you re-authenticate",'warning', FALSE);
-                $q = db_query('DELETE FROM users_roles WHERE uid=%d', $user->uid);
-            }
-        }
+      $count_items = count($doc->result->rowset->row);
+
+      if ($count_items < 1) {
+        drupal_set_message(t('Your account do not authenticate against the API layer. Please correct this by visiting your account page and update your credentials. If you had any roles those are now dropped until you re-authenticate'),'warning', FALSE);
+        $q = db_query('DELETE FROM users_roles WHERE uid=%d', $user->uid);
+      }
     }
+  }
 
-    switch ($op) {
-        case 'insert':
-            $data = array (
-                'drupalid'  => $account->uid,
-                'userid'    => $edit["apiuser"],
-                'api'       => $edit["apikey"],
-            );
+  switch ($op) {
+    case 'insert':
+      $data = array (
+        'drupalid'  => $account->uid,
+        'userid'    => $edit["apiuser"],
+        'api'       => $edit["apikey"],
+      );
 
-            drupal_write_record('eveauth',$data);
-        break;
+      drupal_write_record('eveauth',$data);
+      break;
 
-        case 'delete':
-            $q = db_query('DELETE FROM eveauth WHERE drupalid=%d', $account->uid);
-        break;
-
-
-    }
+    case 'delete':
+      $q = db_query('DELETE FROM eveauth WHERE drupalid=%d', $account->uid);
+      break;
 
 
+  }
 }
 
 

@@ -11,11 +11,19 @@ function user_character_sheets($user) {
     $markup = array ();
 
     // Retrieve a list of available characters from the api servers
-    $user_api   = db_result(db_query('SELECT api FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
-    $user_id    = db_result(db_query('SELECT userid FROM eveauth WHERE drupalid="'.$user->uid.'"', 2));
+
+    $query_api = "SELECT api FROM {eveauth} WHERE drupalid = %d";
+    $res_api = db_query($query_api,$user->uid);
+    $user_api = db_result($res_api);
+
+    $query_user = "SELECT userid FROM {eveauth} WHERE drupalid = %d";
+    $res_user = db_query($query_user,$user->uid);
+    $user_id = db_result($res_user);
+
 
     if (!$user_api) {
-        return drupal_set_message("The specified user does not have a API key associated with it. Character sheet can not be displayed with this user", 'error', FALSE);
+        drupal_set_message(t('The specified user does not have a API key associated with it. Character sheet can not be displayed with this user'), 'error', FALSE);
+        return;
     }
 
     $api_url = 'http://api.eve-online.com/account/Characters.xml.aspx?apiKey='.$user_api.'&userID='.$user_id;
@@ -51,8 +59,9 @@ function user_character_sheets($user) {
         $http_result2 = drupal_http_request($skilltraining_url);
         $training = simplexml_load_string($http_result2->data);
 
-        $skill      = db_result(db_query('SELECT name FROM eveauth_skills WHERE skillid="'.$training->result->trainingTypeID.'"', 2));
-
+        $query_skill = "SELECT name FROM {eveauth_skills} WHERE skillid = %d";
+        $res_skill = db_query($query_skill,$training->result->trainingTypeID);
+        $skill = db_result($res_skill);
 
         // Add Drupal collapse ajax snippet for skill categories
         drupal_add_js('misc/collapse.js');

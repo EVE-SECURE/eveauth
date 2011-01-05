@@ -13,39 +13,39 @@
 
 function eveauth_schema() {
   $schema['eveauth'] = array(
-    'description' => t('This table holds all the account users for new user registering to the site.'),
+    'description' => 'This table holds all the account users for new user registering to the site.',
     'fields' => array(
       'accountid' => array(
-        'description' => t('The primary identifier for an account.'),
+        'description' => 'The primary identifier for an account.',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE
     ),
       'drupalid' => array(
-        'description' => t('The link between api and drupal account.'),
+        'description' => 'The link between api and drupal account.',
         'type' => 'int',
         'not null' => TRUE,
       ),
         'userid' => array(
-        'description' => t('The user id of the account.'),
+        'description' => 'The user id of the account.',
         'type' => 'int',
         'not null' => TRUE,
        ),
       'api' => array(
-        'description' => t('The apikey of the account.'),
+        'description' => 'The apikey of the account.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
        ),
       'chid' => array(
-        'description' => t('Stores the users selected eve character ID'),
+        'description' => 'Stores the users selected eve character ID',
         'type' => 'int',
         'size' => 'big',
         'not null' => FALSE,
         'default' => 0,
        ),
       'auth' => array(
-        'description' => t('Key defining if user is authenticated with extra security'),
+        'description' => 'Key defining if user is authenticated with extra security',
         'type' => 'int',
         'size' => 'tiny',
         'not null' => FALSE,
@@ -60,36 +60,36 @@ function eveauth_schema() {
   );
 
   $schema['eveauth_skills'] = array(
-    'description' => t('This table holds information about the skills required for displaying the character sheet'),
+    'description' => 'This table holds information about the skills required for displaying the character sheet',
     'fields' => array(
         'id'    =>  array (
-            'description'   =>  t('Internal reference, primary identifier'),
+            'description'   =>  'Internal reference, primary identifier',
             'type'          =>  'serial',
             'unsigned'      =>  TRUE,
             'not null'      =>  TRUE,
         ),
 
         'name'      => array (
-            'description'   => t('Name of the skill'),
+            'description'   => 'Name of the skill',
             'type'          => 'varchar',
             'length'        => 255,
             'not null'      => TRUE,
         ),
 
         'groupid'   =>  array (
-            'description'   =>  t('Which group does the skill belong under'),
+            'description'   =>  'Which group does the skill belong under',
             'type'          =>  'int',
             'not null'      =>  TRUE,
         ),
 
         'skillid'   =>  array (
-            'description'   =>  t('Number that refers the skill from api'),
+            'description'   =>  'Number that refers the skill from api',
             'type'          =>  'int',
             'not null'      =>  TRUE,
         ),
 
         'description'   =>  array(
-            'description'   =>  t('Description of the skill'),
+            'description'   =>  'Description of the skill',
             'type'          => 'text',
             'size'          =>  'medium'
         ),
@@ -102,24 +102,24 @@ function eveauth_schema() {
   );
 
    $schema['eveauth_skillgroups'] = array(
-    'description' => t('This table holds information about the skillgroups required for sorting skills'),
+    'description' => 'This table holds information about the skillgroups required for sorting skills',
     'fields' => array(
         'id'    =>  array (
-            'description'   =>  t('Internal reference, primary identifier'),
+            'description'   =>  'Internal reference, primary identifier',
             'type'          =>  'serial',
             'unsigned'      =>  TRUE,
             'not null'      =>  TRUE,
         ),
 
         'name'      => array (
-            'description'   => t('Name of the skillgroup'),
+            'description'   => 'Name of the skillgroup',
             'type'          => 'varchar',
             'length'        => 255,
             'not null'      => TRUE,
         ),
 
         'groupid'   =>  array (
-            'description'   =>  t('Number that refers the skillgroup from api'),
+            'description'   =>  'Number that refers the skillgroup from api',
             'type'          =>  'int',
             'not null'      =>  TRUE,
         ),
@@ -157,7 +157,7 @@ function eveauth_install() {
   $count_skillgroups = count($doc->result->rowset->row);
 
   if ($count_skillgroups < 1) { // return error if XML rowset is 0, i.e empty XML document
-    drupal_set_message("Unable to retrieve skillset from CCP api servers",'error');
+    drupal_set_message(t('Unable to retrieve skillset from CCP api servers'),'error');
   }
 
   for ($i = 0; $i < $count_skillgroups; $i++) {
@@ -192,7 +192,6 @@ function eveauth_update_2() {
     $ret = array ();
     db_add_field($ret, 'eveauth', 'chid', array('type' => 'int', 'size' => 'big', 'not null' => FALSE, 'default' => 0));
     db_add_field($ret, 'eveauth', 'auth', array('type' => 'int', 'size' => 'tiny', 'not null' => FALSE, 'default' => 0));
-    $dbupdate = db_query('UPDATE eveauth SET auth=1');
     $dbupdate = db_query('UPDATE eveauth SET api=0');
     drupal_set_message(t('All API keys have been erased from the database. This means that every user have to go to their account screen and re-update their API key. This does not mean anything important has been lost, but in order for eveauth to work correctly with all the new functions the users need to do this. If you have enabled persistent check, the users will be notified of this.'), 'warning', FALSE);
     return $ret;
@@ -206,6 +205,11 @@ function eveauth_update_2() {
 function eveauth_uninstall() {
   // Drop my tables.
   drupal_uninstall_schema('eveauth');
+
+  // Delete drupal variables and flush cache
+
+  db_query("DELETE FROM {variable} WHERE name LIKE 'eveauth%'");
+  cache_clear_all('variables', 'cache');
 }
 
 
